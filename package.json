@@ -1,0 +1,26 @@
+{
+  "name": "bitcoin-txfee-collector",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "bitcoin-txfee-collector": "get.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/you21979/bitcoin-txfee-collector.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/you21979/bitcoin-txfee-collector/issues"
+  },
+  "homepage": "https://github.com/you21979/bitcoin-txfee-collector#readme",
+  "dependencies": {
+    "insight-cli": "^0.4.7",
+    "promise-util-task": "0.0.3"
+  }
+}
