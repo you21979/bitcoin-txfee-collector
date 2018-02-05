@@ -1,5 +1,7 @@
 const fs = require('fs')
-const InsightRestClient = require('insight-cli').RestClient;
+const InsightCli = require('insight-cli')
+const InsightRestClient = InsightCli.RestClient;
+InsightCli.constant.OPT_KEEPALIVE = true
 const task = require("promise-util-task")
 
 const main = async (argv) => {
@@ -8,7 +10,7 @@ const main = async (argv) => {
     const list = fs.readFileSync(fname, "utf8").split("\n").filter(v => v !== '')
     const res = await task.limit(list.map( (v) => () => cli.transaction(v) ), 5)
     const data = res.map(v => ({txid:v.txid, count:v.vout.length, fees:v.fees}))
-    console.log(data)
+    fs.writeFileSync("out.txt", JSON.stringify(data), "utf8")
 }
 
 main(process.argv.slice(2))
