@@ -2,25 +2,8 @@ const rp = require("request-promise")
 const sleep = require("@you21979/promise-sleep")
 const fs = require("fs")
 
-const prepare = (deposits) => {
-    // format
-    // txid,vout
-    const txouts = deposits.map( v => [v[0],v[1]] )
-    const table = txouts.reduce( (r,v) => {
-        if(!r[ v[0] ]){
-            r[v[0]] = [] 
-        }
-        r[v[0]].push(v[1])
-        return r 
-    }, {})
-    return table
-}
-
-const getspents = (txdata, vouts) => {
-    const spents = vouts.map( v => {
-        return txdata.vout[v].spentTxId
-    }).filter( v => v ? true : false )
-    return spents
+const getinfo = (txdata) => {
+    return {txid:txdata.txid, count:txdata.vout.length, fees:txdata.fees}
 }
 
 const txget = async (context, txid) => {
@@ -42,19 +25,16 @@ const txget = async (context, txid) => {
     }
 }
 
-const datagetmain = async (context, txtable) => {
+const datagetmain = async (context, txs) => {
     const results = []
-    const keys = Object.keys(txtable)
+    const keys = txs
     for(let i = 0; i < keys.length; ++i){
         const txid = keys[i]
-        const vouts = txtable[txid]
         try{
             const txdata = await txget(context, txid)
-            const spents = getspents(txdata, vouts)
-            console.log(spents)
-            spents.forEach(v => {
-                results.push(v)
-            })
+            const info = getinfo(txdata)
+            console.log(info)
+            results.push(info)
         }catch(e){
             console.log(e)
             // retry
@@ -63,18 +43,13 @@ const datagetmain = async (context, txtable) => {
         }
         if(context.isWait) await sleep(context.INSIGHT_WAIT)
     }
-    const tbl = results.reduce( (r, v) => {
-        r[v] = 1
-        return r
-    }, {})
-    return Object.keys(tbl)
+    return results
 }
 
 const proc = async(context) => {
-    const deposits = fs.readFileSync(context.input_file, "utf-8").split("\n").filter(v => v !== '').map( v => v.split(",") )
-    const txtable = prepare(deposits)
-    const spent_txids = await datagetmain(context, txtable);
-    fs.writeFileSync(context.output_file, spent_txids.join("\n"), "utf-8")
+    const txs = fs.readFileSync(context.input_file, "utf-8").split("\n").filter(v => v !== '')
+    const infos = await datagetmain(context, txs);
+    fs.writeFileSync(context.output_file, infos.map(v => [v.txid,v.count,v.fees].join(",")).join("\n"), "utf-8")
 }
 
 const main = async() => {
@@ -84,7 +59,7 @@ const main = async() => {
         INSIGHT_ERROR_WAIT : 3000,
         isWait : false,
         input_file : "./txlist.txt",
-        output_file : "./spents_out.txt",
+        output_file : "./txinfo.txt",
         cache_tbl : [],
         cache_size : 10,
     }
